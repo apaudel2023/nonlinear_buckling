@@ -1,0 +1,113 @@
+clc; clear; close all;
+
+this_file = fileparts(fileparts(mfilename('fullpath')));
+repo_root = fileparts(this_file);
+fprintf('[INFO] Repo root: %s\n', repo_root);
+
+% Add paths
+addpath(genpath(fullfile(repo_root, 'functions')));
+addpath(genpath(fullfile(repo_root, 'configs')));
+addpath(genpath(fullfile(repo_root, 'scripts')));
+addpath(genpath(fullfile(repo_root, 'scripts', 'solvers')));  % <-- Required for SOL_400_IMPF_LBA_FUNC_MAIN
+
+% Load config
+config = linear_buck_imperf();
+
+% Load banks
+SAMPBANK = load(fullfile(repo_root, config.sample_bank_path), '-mat');
+RESULTBANK = load(fullfile(repo_root, config.result_bank_path), '-mat');
+LBA_RESULTS = RESULTBANK.RESULT_LBA_PERF_SAMP_1_5E3_25D_SF_1E3_2E1;
+
+% Ensure all output dirs exist
+outdirs = {config.outdir_f06_perfect, config.outdir_op2_perfect, ...
+           config.outdir_f06_imperfect, config.outdir_op2_imperfect};
+for i = 1:numel(outdirs)
+    fullpath = fullfile(repo_root, outdirs{i});
+    if ~exist(fullpath, 'dir')
+        mkdir(fullpath);
+    end
+end
+
+% Loop over samples
+for itk = config.sample_start:config.sample_end
+    fprintf('\n[INFO] ======= SAMPLE %d =======\n', itk);
+    tic;
+    temp_dir = fullfile(repo_root, 'temp_run', sprintf('sample_%04d', itk));
+    if ~exist(temp_dir, 'dir')
+        mkdir(temp_dir);
+    end
+    old_dir = pwd; cd(temp_dir);
+
+    %% Sample and setup
+    mat_props = SAMPBANK.SAMPBANK_SFMAX_2E1_1E2_25D.ORG_SAMP(itk, 1:4);
+    ply_props = SAMPBANK.SAMPBANK_SFMAX_2E1_1E2_25D.ORG_SAMP(itk, 5:24);
+    sf = SAMPBANK.SAMPBANK_SFMAX_2E1_1E2_25D.ORG_SAMP(itk, 25);
+
+    MAT_PROP_FUNC_1(mat_props);
+    MAT_PROP_FUNC_2(ply_props);
+    LOADS_FUNC(config.applied_force, config.load_file);
+
+    %% -------- STEP 1: Perfect Linear Buckling --------
+    bdf_105 = fullfile(repo_root, config.bdf_perfect);
+    local_105 = 'PERFECT_SOL_105.bdf'; copyfile(bdf_105, local_105);
+    fprintf('[INFO] Running SOL 105...\n');
+    cmd_105 = sprintf('%s %s scr=yes old=no delete=f04,log,xdb', ...
+        config.nastran_cmd, local_105);
+    system(cmd_105); pause(config.simulation_pause);
+
+    f06_105 = 'PERFECT_SOL_105.f06';
+    op2_105 = 'PERFECT_SOL_105.op2';
+
+    copyfile(f06_105, fullfile(repo_root, config.outdir_f06_perfect, ...
+        sprintf('sample_%04d.f06', itk)));
+
+    if config.save_op2 && isfile(op2_105)
+        copyfile(op2_105, fullfile(repo_root, config.outdir_op2_perfect, ...
+            sprintf('sample_%04d.op2', itk)));
+    end
+
+    %% -------- STEP 2: Imperfect Linear Buckling --------
+    PRE_RUN_FILE_NAME = op2_105;
+    SOL_400_FUNC_MAIN(sf, PRE_RUN_FILE_NAME);
+
+    files_to_copy = {'COMPOSITE_MAT_PROP1.dat', ...
+                     'COMPOSITE_MAT_PROP2.dat', ...
+                     'IMP_CYLINDER_SOL400.dat', ...
+                     PRE_RUN_FILE_NAME};
+
+    sol400_dir = fullfile(temp_dir, 'SOL400'); mkdir(sol400_dir);
+    for i = 1:numel(files_to_copy)
+        copyfile(files_to_copy{i}, sol400_dir);
+    end
+
+    cd(sol400_dir);
+    bdf_400 = fullfile(repo_root, config.bdf_imperfect);
+    local_400 = 'IMPERFECT_SOL_400.bdf'; copyfile(bdf_400, local_400);
+
+    fprintf('[INFO] Running SOL 400...\n');
+    cmd_400 = sprintf('%s %s scr=yes old=no delete=f04,log,xdb', ...
+        config.nastran_cmd, local_400);
+    system(cmd_400); pause(config.simulation_pause);
+
+    f06_400 = 'IMPERFECT_SOL_400.f06';
+    op2_400 = 'IMPERFECT_SOL_400.op2';
+    copyfile(f06_400, fullfile(repo_root, config.outdir_f06_imperfect, ...
+        sprintf('sample_%04d.f06', itk)));
+    if config.save_op2 && isfile(op2_400)
+        copyfile(op2_400, fullfile(repo_root, config.outdir_op2_imperfect, ...
+            sprintf('sample_%04d.op2', itk)));
+    end
+
+    %% Cleanup
+    cd(old_dir);
+    if config.delete_temp
+        try
+            rmdir(temp_dir, 's');
+            fprintf('[INFO] Deleted temp directory: %s\n', temp_dir);
+        catch ME
+            warning('[WARN] Could not delete temp dir: %s\n%s', temp_dir, ME.message);
+        end
+    end
+
+    toc;
+end
