@@ -1,0 +1,7 @@
+$ FORCE SID G CID F N1 N2 N3
+$ SID  Load set identification number.  (Integer>0)
+$ G    Grid point identification number.  (Integer >0) 
+$ CID  Coordinate system identification number.  (Integer >0; Default=0) 
+$ F    Scale factor.  (Real) Ni Components of a vector measured in coordinate system defined by CID.  (Real) 
+FORCE  * 1               50000           0                     275000.00
+*        0.              0.              -1.
