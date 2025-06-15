@@ -6,7 +6,7 @@ config = struct();
 
 % Sample range
 config.sample_start = 1;
-config.sample_end = 1;
+config.sample_end = 2;
 
 % Paths
 config.sample_bank_path = fullfile('samples', 'SAMPBANK_SFMAX_2E1_1E2_25D.mat');
@@ -22,12 +22,15 @@ config.nastran_cmd = '"C:\Program Files\MSC.Software\MSC_Nastran\2023.4\bin\nast
 
 % Analysis control
 config.applied_force = 275000;
-config.simulation_pause = 35;
 config.save_op2_imperfect = true;
 config.delete_temp = true;
 
+% Nastran max run time 
+config.simulation_timeout105 = 200;
+config.simulation_timeout400 = 200;
+
 % Postprocessing setup
 config.nmodes_perf = 10;
-config.hline_perf = 450;
+config.hline_perf = 350;
 
 end

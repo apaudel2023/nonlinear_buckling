@@ -1,0 +1,29 @@
+# === Ignore generic Nastran scratch and temp files ===
+*.pch
+*.sts
+*.f04
+*.plt
+*.bat
+*.rcf
+*.aeso
+*.asm
+*.xdb
+*.log
+
+
+
+# === Ignore temp folders ===
+data/**/tmp_sample_*/
+
+# === Keep official result .f06 and .op2 files ===
+# (ignore only tmp folders or incomplete result files)
+!data/**/f06_*/sample_*.f06
+!data/**/op2_*/sample_*.op2
+
+# === Optional MATLAB temp files ===
+*.asv
+*.autosave
+*.m~ 
+
+# === macOS Finder metadata ===
+.DS_Store
