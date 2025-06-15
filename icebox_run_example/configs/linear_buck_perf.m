@@ -8,7 +8,7 @@ config = struct();
 
 % General Settings
 config.sample_start = 1;
-config.sample_end = 20;
+config.sample_end = 1;
 
 % Paths (relative to repo root)
 config.sample_bank_path = fullfile('samples', 'SAMPBANK_SFMAX_2E1_1E2_25D.mat');
@@ -22,8 +22,8 @@ config.output_dir = fullfile('data', 'linear_buckling_results');
 % Nastran executable (edit for HPC or local use)
 % e.g., on Windows: 'C:\Program Files\MSC.Software\MSC_Nastran\2021\bin\nastranw.exe'
 % e.g., on Linux/HPC: 'nastran'
-config.nastran_cmd = 'nastran';
-
+% config.nastran_cmd = 'nastran';
+config.nastran_cmd = '"C:\Program Files\MSC.Software\MSC_Nastran\2023.4\bin\nastranw.exe"';
 % Load application
 config.applied_force = 275E3; % kN
 

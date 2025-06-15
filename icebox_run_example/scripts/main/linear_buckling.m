@@ -3,7 +3,7 @@ clc; clear; close all;
 
 
 this_file = fileparts(fileparts(mfilename('fullpath')));
-repo_root = fileparts(this_file)
+repo_root = fileparts(this_file);
 
 fprintf('[INFO] Repo root detected: %s\n', repo_root);
 
@@ -63,7 +63,7 @@ for itk = config.sample_start:config.sample_end
         bdf_command = sprintf('%s %s scr=yes old=no delete=f04,log,xdb', ...
             config.nastran_cmd, bdf_filename);
         fprintf('[INFO] Executing Nastran: %s\n', bdf_command);
-        % system(bdf_command);
+        system(bdf_command);
         pause(config.simulation_pause);
     else
         error('BDF file not found: %s\n', bdf_filename);
