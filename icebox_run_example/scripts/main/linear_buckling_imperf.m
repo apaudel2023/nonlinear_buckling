@@ -85,7 +85,10 @@ for itk = config.sample_start:config.sample_end
     sol400_dir = fullfile(temp_dir, 'SOL400');
     mkdir_if_missing(sol400_dir);
 
-    copyfile(op2_file_moved_path, fullfile(sol400_dir, 'BDF_PERFECT_LBA_SOL_105.op2'));
+    %% Rename .op2 as expected by downstream processing
+    op2_input_file = 'BDF_PERFECT_LBA_SOL_105.op2';
+    op2_file_moved_path = fullfile(dir_op2_perf, sprintf('sample_%04d.op2', itk));
+    copyfile(op2_file_moved_path, fullfile(sol400_dir, op2_input_file));
     copyfile('INCLUDE_COMPOSITE_MAT_PROP1.dat', fullfile(sol400_dir, 'INCLUDE_COMPOSITE_MAT_PROP1.dat'));
     copyfile('INCLUDE_COMPOSITE_MAT_PROP2.dat', fullfile(sol400_dir, 'INCLUDE_COMPOSITE_MAT_PROP2.dat'));
     copyfile(impf_dat_file, fullfile(sol400_dir, impf_dat_file));
@@ -93,7 +96,6 @@ for itk = config.sample_start:config.sample_end
     cd(sol400_dir);
 
     %% === Generate SOL 400 input (.dat) ===
-    op2_input_file = 'BDF_PERFECT_LBA_SOL_105.op2';
     SOL_400_IMPF_LBA_FUNC_MAIN(sf_value, op2_input_file, impf_dat_file);
 
     %% === Generate new load file based on Pcr ===

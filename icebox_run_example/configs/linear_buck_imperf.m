@@ -6,7 +6,7 @@ config = struct();
 
 % Sample range
 config.sample_start = 1;
-config.sample_end = 2;
+config.sample_end = 5;
 
 % Paths
 config.sample_bank_path = fullfile('samples', 'SAMPBANK_SFMAX_2E1_1E2_25D.mat');
