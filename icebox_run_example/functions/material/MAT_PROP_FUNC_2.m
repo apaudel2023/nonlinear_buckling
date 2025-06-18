@@ -1,9 +1,14 @@
-function MAT_PROP_FUNC_2(samples)
-tply = samples(1:10);
-ortply = samples(11:20);
+function MAT_PROP_FUNC_2(filename, samples)
+fprintf('[INFO] Writing composite ply properties to: %s\n', filename);
+
+tply   = samples(1:10);   % Thickness of each ply
+ortply = samples(11:20);  % Orientation of each ply
+
 fclose('all');
-delete INCLUDE_COMPOSITE_MAT_PROP2.dat;
-FID2 = fopen('INCLUDE_COMPOSITE_MAT_PROP2.dat','w'); %% NEW DAT FILE
+FID2 = fopen(filename,'w'); %% NEW DAT FILE
+if FID2 == -1
+    error('[ERROR] Could not open file: %s', filename);
+end
 
 fprintf(FID2,'PCOMP  * 1  \n');                                                                    
 fprintf(FID2,'*          \n');                                                                       
@@ -19,5 +24,6 @@ fprintf(FID2,erase(sprintf('*        1              %8.3e        %16.12fYES\n',t
 fprintf(FID2,erase(sprintf('*        1              %8.3e        %16.12fYES'  ,tply(10),ortply(10)),'e'));                    
 
 fclose(FID2);
-pause(1)
+pause(1);  % Brief pause to ensure disk I/O finishes
+fprintf('[INFO] Ply property file created successfully: %s\n', filename);
 end
