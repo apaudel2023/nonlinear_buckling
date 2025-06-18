@@ -1,7 +1,6 @@
 % scripts/main/linear_buckling.m
 clc; clear; close all;
 
-
 this_file = fileparts(fileparts(mfilename('fullpath')));
 repo_root = fileparts(this_file);
 
@@ -13,12 +12,10 @@ addpath(genpath(fullfile(repo_root, 'configs')));
 addpath(genpath(fullfile(repo_root, 'scripts')));
 
 % Load config
-config = linear_buck_perf();
+config = cfg_linear_buck_perf();
 
-% Load data
+% Load samples
 SAMPBANK = load(fullfile(repo_root, config.sample_bank_path), '-mat');
-RESULTBANK = load(fullfile(repo_root, config.result_bank_path), '-mat');
-LBA_RESULTS = RESULTBANK.RESULT_LBA_PERF_SAMP_1_5E3_25D_SF_1E3_2E1;
 
 % Output dir
 output_dir_full = fullfile(repo_root, config.output_dir);
@@ -33,7 +30,7 @@ for itk = config.sample_start:config.sample_end
     tic;
 
     % Setup temp dir
-    temp_dir = fullfile(output_dir_full, sprintf('tmp_sample_%04d', itk));
+    temp_dir = fullfile(output_dir_full, sprintf('tmp_sample_%06d', itk));
     if ~exist(temp_dir, 'dir')
         mkdir(temp_dir);
         fprintf('[INFO] Created temp directory: %s\n', temp_dir);
@@ -41,7 +38,8 @@ for itk = config.sample_start:config.sample_end
 
     % Copy BDF to temp dir
     bdf_template_path = fullfile(repo_root, config.bdf_file);
-    bdf_filename = 'BDF_PERFECT_LBA_SOL_105.bdf';
+    [~, bdf_name, ext] = fileparts(config.bdf_file);
+    bdf_filename = [bdf_name, ext];
     bdf_working_path = fullfile(temp_dir, bdf_filename);
     copyfile(bdf_template_path, bdf_working_path);
 
@@ -54,9 +52,9 @@ for itk = config.sample_start:config.sample_end
     ply_props = SAMPBANK.SAMPBANK_SFMAX_2E1_1E2_25D.ORG_SAMP(itk, 5:24);
 
     % Create include files
-    MAT_PROP_FUNC_1(mat_props);
-    MAT_PROP_FUNC_2(ply_props);
-    LOADS_FUNC(config.applied_force, config.load_file);
+    MAT_PROP_FUNC_1(config.matprop1, mat_props);
+    MAT_PROP_FUNC_2(config.matprop2, ply_props);
+    LOADS_FUNC(config.load_file, config.applied_force);
 
     % Run Nastran
     if isfile(bdf_filename)
@@ -64,15 +62,16 @@ for itk = config.sample_start:config.sample_end
             config.nastran_cmd, bdf_filename);
         fprintf('[INFO] Executing Nastran: %s\n', bdf_command);
         system(bdf_command);
-        pause(config.simulation_pause);
+        check_nastran_status(bdf_filename, config.simulation_timeout105);
     else
         error('BDF file not found: %s\n', bdf_filename);
     end
 
     % Save f06 output
-    out_f06 = fullfile(temp_dir, 'BDF_PERFECT_LBA_SOL_105.f06');
+    fo6_filename = [bdf_name, '.f06'];
+    out_f06 = fullfile(temp_dir, fo6_filename);
     if isfile(out_f06)
-        dest_name = fullfile(output_dir_full, sprintf('sample_%04d.f06', itk));
+        dest_name = fullfile(output_dir_full, sprintf('sample_%06d.f06', itk));
         copyfile(out_f06, dest_name);
         fprintf('[INFO] Saved .f06 to: %s\n', dest_name);
     else
@@ -82,12 +81,7 @@ for itk = config.sample_start:config.sample_end
     % Cleanup
     cd(old_dir);
     if config.delete_temp
-        try
-            rmdir(temp_dir, 's');
-            fprintf('[INFO] Deleted temp directory: %s\n', temp_dir);
-        catch ME
-            warning('[WARN] Could not delete temp dir: %s\n%s', temp_dir, ME.message);
-        end
+        cleanup_dir(temp_dir);  % uses defaults: 5 retries, 2 sec pause
     end
 
     toc;

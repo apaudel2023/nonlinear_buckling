@@ -79,8 +79,6 @@ for itk = config.sample_start:config.sample_end
         continue;
     end
 
-
-
     %% === Copy files to SOL400 dir ===
     sol400_dir = fullfile(temp_dir, 'SOL400');
     mkdir_if_missing(sol400_dir);
@@ -91,11 +89,11 @@ for itk = config.sample_start:config.sample_end
     copyfile(op2_file_moved_path, fullfile(sol400_dir, op2_input_file));
     copyfile('INCLUDE_COMPOSITE_MAT_PROP1.dat', fullfile(sol400_dir, 'INCLUDE_COMPOSITE_MAT_PROP1.dat'));
     copyfile('INCLUDE_COMPOSITE_MAT_PROP2.dat', fullfile(sol400_dir, 'INCLUDE_COMPOSITE_MAT_PROP2.dat'));
-    copyfile(impf_dat_file, fullfile(sol400_dir, impf_dat_file));
 
     cd(sol400_dir);
 
     %% === Generate SOL 400 input (.dat) ===
+    impf_dat_file = 'INCLUDE_IMPF_LBA_MAIN.dat';
     SOL_400_IMPF_LBA_FUNC_MAIN(sf_value, op2_input_file, impf_dat_file);
 
     %% === Generate new load file based on Pcr ===
@@ -109,7 +107,7 @@ for itk = config.sample_start:config.sample_end
         config.nastran_cmd, bdf_file_400);
     fprintf('[INFO] Running SOL 400...\n');
     system(cmd400);
-    check_nastran_status(bdf_file_105, config.simulation_timeout400);
+    check_nastran_status(bdf_file_400, config.simulation_timeout400);
 
 
     %% === Save F06 and optionally OP2 from SOL 400 ===

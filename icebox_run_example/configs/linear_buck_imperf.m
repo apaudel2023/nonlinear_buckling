@@ -27,7 +27,7 @@ config.delete_temp = true;
 
 % Nastran max run time 
 config.simulation_timeout105 = 200;
-config.simulation_timeout400 = 200;
+config.simulation_timeout400 = 300;
 
 % Postprocessing setup
 config.nmodes_perf = 10;
